@@ -1,44 +1,59 @@
+// server.js
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
 
+import connectDB from './db.js';
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/product.js';
-import orderRoutes from './routes/orderRoutes.js'; // ✅ Order routes
+import orderRoutes from './routes/orderRoutes.js';
 
 dotenv.config();
 
+// ✅ Connect to MongoDB
+connectDB();
+
 const app = express();
 
-// Middleware
-app.use(cors());
+// ✅ Allowlisted origins (add more as needed)
+const allowedOrigins = [
+  'http://localhost:3000',               // for local dev
+  'https://manuel-aig.vercel.app'        // for deployed frontend
+];
+
+// ✅ CORS middleware with dynamic origin checking
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like Postman or curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
+
+// ✅ Logging middleware
+app.use(morgan('dev'));
+
+// ✅ JSON body parsing
 app.use(express.json());
 
-// Default root route
+// ✅ Root test route
 app.get('/', (req, res) => {
   res.send('✅ API is running...');
 });
 
-// API routes
-app.use('/api/auth', authRoutes);         // e.g., /api/auth/register, /login
-app.use('/api/products', productRoutes);  // e.g., /api/products
-app.use('/api/orders', orderRoutes);      // e.g., /api/orders (protected routes)
+// ✅ API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
 
-// Connect to MongoDB and start server
+// ✅ Start the server
 const PORT = process.env.PORT || 5000;
-
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    app.listen(PORT, () =>
-      console.log(`🚀 Server running at http://localhost:${PORT}`)
-    );
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1); // Exit on DB connection error
-  });
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
