@@ -17,38 +17,36 @@ connectDB();
 
 const app = express();
 
-// ✅ Allowlisted origins (add more as needed)
+// ✅ Allowlisted origins for CORS
 const allowedOrigins = [
   'http://localhost:3000',
-  'http://localhost:5173',               // for local dev
-  'https://manuel-aig.vercel.app'        // for deployed frontend
+  'http://localhost:5173',               // local dev
+  'https://manuel-aig.vercel.app'        // production frontend
 ];
 
-// ✅ CORS middleware with dynamic origin checking
+// ✅ CORS configuration
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like Postman or curl)
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      callback(null, true); // ✅ Allow request
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`❌ Blocked CORS request from: ${origin}`);
+      callback(null, false); // ✅ Deny silently (no crash)
     }
   },
-  credentials: true,
+  credentials: true, // ✅ Allow cookies and headers
 }));
 
-// ✅ Logging middleware
+// ✅ Middleware
 app.use(morgan('dev'));
+app.use(express.json()); // parse JSON bodies
 
-// ✅ JSON body parsing
-app.use(express.json());
-
-// ✅ Root test route
+// ✅ Test route
 app.get('/', (req, res) => {
   res.send('✅ API is running...');
 });
 
-// ✅ API routes
+// ✅ Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
