@@ -19,7 +19,8 @@ const app = express();
 
 // ✅ Allowlisted origins (add more as needed)
 const allowedOrigins = [
-  'http://localhost:3000',               // for local dev
+  'http://localhost:3000',
+  'http://localhost:5173',               // for local dev
   'https://manuel-aig.vercel.app'        // for deployed frontend
 ];
 

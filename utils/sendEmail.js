@@ -1,15 +1,21 @@
+// utils/sendEmail.js
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
 
-// Gmail transporter using App Password
+dotenv.config(); // ✅ Load .env variables
+
+// ✅ Configure transporter for Gmail using TLS (port 587)
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587, // ✅ Use TLS
+  secure: false, // ❌ Not SSL — STARTTLS is used instead
   auth: {
-    user: process.env.EMAIL_USER,  // e.g. baighangbe@gmail.com
-    pass: process.env.EMAIL_PASS,  // Gmail App Password (16-character)
+    user: process.env.EMAIL_USER, // ✅ e.g. baighangbe@gmail.com
+    pass: process.env.EMAIL_PASS, // ✅ Gmail App Password
   },
 });
 
-// Function to send order confirmation email
+// ✅ Function to send order confirmation email
 export const sendOrderEmail = async (to, order) => {
   try {
     const itemList = order.items
@@ -42,7 +48,6 @@ export const sendOrderEmail = async (to, order) => {
     console.log("✅ Order confirmation email sent to:", to);
   } catch (err) {
     console.error("❌ Failed to send order email:", err.message);
-    // Optional: rethrow if you want to handle it in the route
-    throw err;
+    throw err; // Let route handler decide what to do
   }
 };
