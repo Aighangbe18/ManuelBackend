@@ -26,26 +26,26 @@ const allowedOrigins = [
   'https://manuel-aig-elzc.vercel.app',
 ];
 
-// ✅ CORS configuration with safe fallback
+// ✅ CORS middleware
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+    origin: function (origin, callback) {
+      // Allow requests from tools like Postman with no origin
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
       } else {
-        console.warn(`❌ CORS blocked for origin: ${origin}`);
-        return callback(new Error('Not allowed by CORS'));
+        console.warn(`❌ CORS blocked: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
       }
     },
-    credentials: true, // Required for cookies or Authorization headers
+    credentials: true,
   })
 );
 
-// ✅ Built-in middlewares
+// ✅ Logging (optional but useful)
 app.use(morgan('dev'));
+
+// ✅ Allow JSON in request body
 app.use(express.json());
 
 // ✅ Health check route
@@ -53,14 +53,14 @@ app.get('/', (req, res) => {
   res.send('✅ API is running...');
 });
 
-// ✅ API routes
+// ✅ Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// ✅ Start server
+// ✅ Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
