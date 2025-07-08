@@ -1,35 +1,46 @@
-// middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-// ✅ Protect routes (logged-in users only)
+// ✅ Middleware to protect routes (Only logged-in users can access)
 export const protect = async (req, res, next) => {
   let token;
 
-  // Check for Authorization header
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    try {
-      token = req.headers.authorization.split(" ")[1]; // Extract token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify token
-      req.user = await User.findById(decoded.id).select("-password"); // Attach user to request
-      return next(); // Proceed
-    } catch (error) {
-      return res.status(401).json({ message: "Not authorized, token failed" });
-    }
-  }
+  try {
+    // Check for Authorization header with Bearer token
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
 
-  // If no token provided
-  return res.status(401).json({ message: "Not authorized, no token" });
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // Fetch user from DB (excluding password)
+      const user = await User.findById(decoded.id).select("-password");
+
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Attach user to request object
+      req.user = user;
+
+      return next(); // Proceed to next middleware or route
+    }
+
+    return res.status(401).json({ message: "No token provided" });
+  } catch (error) {
+    console.error("❌ Auth error:", error.message);
+    return res.status(401).json({ message: "Not authorized, token failed" });
+  }
 };
 
-// ✅ Restrict to admin users only
+// ✅ Middleware to allow only admin users
 export const adminOnly = (req, res, next) => {
   if (req.user && req.user.isAdmin) {
-    return next();
-  } else {
-    return res.status(403).json({ message: "Access denied: Admins only" });
+    return next(); // Proceed if user is admin
   }
+
+  return res.status(403).json({ message: "Access denied: Admins only" });
 };

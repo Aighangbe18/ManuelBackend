@@ -9,6 +9,7 @@ import connectDB from './db.js';
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/product.js';
 import orderRoutes from './routes/orderRoutes.js';
+import paymentRoutes from './routes/payments.js';
 
 dotenv.config();
 
@@ -17,42 +18,45 @@ connectDB();
 
 const app = express();
 
-// ✅ Allowlisted origins for CORS
+// ✅ Allowed origins
 const allowedOrigins = [
   'http://localhost:3000',
-  'http://localhost:5173',               // local dev
-  'https://manuel-aig.vercel.app' ,       // production frontend
-  'https://manuel-aig-elzc.vercel.app/'
+  'http://localhost:5173',
+  'https://manuel-aig.vercel.app',
+  'https://manuel-aig-elzc.vercel.app',
 ];
 
-// ✅ CORS configuration
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true); // ✅ Allow request
-    } else {
-      console.warn(`❌ Blocked CORS request from: ${origin}`);
-      callback(null, false); // ✅ Deny silently (no crash)
-    }
-  },
-  credentials: true, // ✅ Allow cookies and headers
-}));
+// ✅ CORS middleware
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`❌ Blocked CORS request from: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 
-// ✅ Middleware
+// ✅ Middlewares
 app.use(morgan('dev'));
-app.use(express.json()); // parse JSON bodies
+app.use(express.json());
 
-// ✅ Test route
+// ✅ Health check route
 app.get('/', (req, res) => {
   res.send('✅ API is running...');
 });
 
-// ✅ Routes
+// ✅ API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes); // ✅ Moved here after `app` is defined
 
-// ✅ Start the server
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
