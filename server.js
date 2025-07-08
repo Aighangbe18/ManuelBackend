@@ -18,7 +18,7 @@ connectDB();
 
 const app = express();
 
-// ✅ Allowed origins
+// ✅ Define allowed frontend origins
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
@@ -26,22 +26,25 @@ const allowedOrigins = [
   'https://manuel-aig-elzc.vercel.app',
 ];
 
-// ✅ CORS middleware
+// ✅ CORS configuration with safe fallback
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       } else {
-        console.warn(`❌ Blocked CORS request from: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
+        console.warn(`❌ CORS blocked for origin: ${origin}`);
+        return callback(new Error('Not allowed by CORS'));
       }
     },
-    credentials: true,
+    credentials: true, // Required for cookies or Authorization headers
   })
 );
 
-// ✅ Middlewares
+// ✅ Built-in middlewares
 app.use(morgan('dev'));
 app.use(express.json());
 
@@ -50,11 +53,11 @@ app.get('/', (req, res) => {
   res.send('✅ API is running...');
 });
 
-// ✅ API Routes
+// ✅ API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentRoutes); // ✅ Moved here after `app` is defined
+app.use('/api/payments', paymentRoutes);
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
